@@ -49,7 +49,7 @@ class Manager:
     def get_post_insights(self, post_id: str) -> dict[str, Any]:
         metrics = [
             "post_impressions", "post_impressions_unique", "post_impressions_paid",
-            "post_impressions_organic", "post_engaged_users", "post_clicks",
+            "post_impressions_organic", "post_clicks",
             "post_reactions_like_total", "post_reactions_love_total", "post_reactions_wow_total",
             "post_reactions_haha_total", "post_reactions_sorry_total", "post_reactions_anger_total",
         ]
@@ -68,7 +68,15 @@ class Manager:
         return self.api.get_insights(post_id, "post_impressions_organic")
 
     def get_post_engaged_users(self, post_id: str) -> dict[str, Any]:
-        return self.api.get_insights(post_id, "post_engaged_users")
+        return {
+            "status": "unsupported",
+            "metric": "post_engaged_users",
+            "post_id": post_id,
+            "message": (
+                "Meta deprecated post_engaged_users for all Graph API versions on June 15, 2026, "
+                "and provides no equivalent post-level engaged-users metric."
+            ),
+        }
 
     def get_post_clicks(self, post_id: str) -> dict[str, Any]:
         return self.api.get_insights(post_id, "post_clicks")

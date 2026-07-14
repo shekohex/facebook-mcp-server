@@ -113,7 +113,7 @@ def get_post_clicks(post_id: str) -> dict[str, Any]:
 
 @mcp.tool()
 def get_post_engaged_users(post_id: str) -> dict[str, Any]:
-    """Fetch the number of engaged users."""
+    """Report availability of Meta's deprecated post engaged-users metric."""
     return manager.get_post_engaged_users(post_id)
 
 

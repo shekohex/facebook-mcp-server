@@ -31,7 +31,7 @@ This MCP provides a suite of AI-callable tools that connect directly to a Facebo
 | `delete_post`                    | Delete a specific post by ID.                                       |
 | `delete_comment`                 | Delete a specific comment by ID.                                    |
 | `get_number_of_comments`         | Count the number of comments on a post.                             |
-| `get_post_engaged_users`         | Get number of users who engaged with the post.                      |
+| `get_post_engaged_users`         | Report unsupported status for Meta's deprecated engaged-users metric. |
 | `get_post_clicks`                | Get number of clicks on the post.                                   |
 | `post_image_to_facebook`         | Post an image with a caption to the Facebook page.                  |
 | `update_post`                    | Updates an existing post's message.                                 |

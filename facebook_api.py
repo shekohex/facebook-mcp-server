@@ -17,9 +17,8 @@ ALLOWED_MESSAGE_TAGS = {"HUMAN_AGENT"}
 
 POST_FIELDS = "id,message,created_time"
 POST_ATTACHMENT_FIELDS = (
-    "full_picture,source,"
-    "attachments.limit(25){description,media,media_type,target,title,type,url,"
-    "subattachments.limit(25){description,media,media_type,target,title,type,url}}"
+    "description,media,media_type,target,title,type,url,"
+    "subattachments.limit(25){description,media,media_type,target,title,type,url}"
 )
 
 
@@ -117,16 +116,23 @@ class FacebookAPI:
         return self._request("POST", f"{comment_id}/comments", {"message": message})
 
     def get_posts(self, include_attachments: bool = False) -> dict[str, Any]:
-        fields = POST_FIELDS
+        posts = self._request("GET", f"{PAGE_ID}/posts", {"fields": POST_FIELDS})
         if include_attachments:
-            fields = f"{fields},{POST_ATTACHMENT_FIELDS}"
-        return self._request("GET", f"{PAGE_ID}/posts", {"fields": fields})
+            for post in posts.get("data", []):
+                post_id = post.get("id")
+                if post_id:
+                    post["attachments"] = self.get_post_attachments(post_id)
+        return posts
 
     def get_post_info(self, post_id: str, include_attachments: bool = False) -> dict[str, Any]:
         fields = f"{POST_FIELDS},updated_time,permalink_url"
+        post = self._request("GET", post_id, {"fields": fields})
         if include_attachments:
-            fields = f"{fields},{POST_ATTACHMENT_FIELDS}"
-        return self._request("GET", post_id, {"fields": fields})
+            post["attachments"] = self.get_post_attachments(post_id)
+        return post
+
+    def get_post_attachments(self, post_id: str) -> dict[str, Any]:
+        return self._request("GET", f"{post_id}/attachments", {"fields": POST_ATTACHMENT_FIELDS, "limit": 25})
 
     def get_comments(self, post_id: str) -> dict[str, Any]:
         return self._request("GET", f"{post_id}/comments", {"fields": "id,message,from,created_time"})

@@ -1,0 +1,32 @@
+services:
+  facebook-mcp:
+    image: ${IMAGE_NAME:-facebook-mcp-server:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      FACEBOOK_ACCESS_TOKEN: ${FACEBOOK_ACCESS_TOKEN:?Set FACEBOOK_ACCESS_TOKEN in .env}
+      FACEBOOK_PAGE_ID: ${FACEBOOK_PAGE_ID:?Set FACEBOOK_PAGE_ID in .env}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: ${MCP_PORT:-8000}
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-localhost:*,127.0.0.1:*}
+    ports:
+      - "${MCP_PORT:-8000}:${MCP_PORT:-8000}"
+    init: true
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import os, socket; socket.create_connection(('127.0.0.1', int(os.environ['MCP_PORT'])), 2).close()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

@@ -1,6 +1,6 @@
 # Facebook MCP Server
 
-This project is a **MCP server** for automating and managing interactions on a Facebook Page using the Facebook Graph API. It exposes tools to create posts, moderate comments, fetch post insights, and filter negative feedback — ready to plug into Claude, or other LLM-based agents.
+This project is a **MCP server** for managing a Facebook Page using the Facebook Graph API. It exposes a focused set of tools for reading, publishing, moderating, and measuring Page content.
 
 [![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/HagaiHen/facebook-mcp-server)](https://archestra.ai/mcp-catalog/hagaihen__facebook-mcp-server)
 <a href="https://glama.ai/mcp/servers/@HagaiHen/facebook-mcp-server">
@@ -25,40 +25,30 @@ This MCP provides a suite of AI-callable tools that connect directly to a Facebo
 
 | Tool                             | Description                                                         |
 |----------------------------------|---------------------------------------------------------------------|
-| `post_to_facebook`               | Create a new Facebook post with a message.                          |
-| `reply_to_comment`               | Reply to a specific comment on a post.                              |
 | `get_page_posts`                 | Retrieve recent posts from the Page.                                |
 | `get_post_comments`              | Fetch comments on a given post.                                     |
 | `delete_post`                    | Delete a specific post by ID.                                       |
 | `delete_comment`                 | Delete a specific comment by ID.                                    |
-| `hide_comment`                   | Hide a comment from public view.                         |
-| `unhide_comment`                 | Unhide a previously hidden comment.                      |
-| `delete_comment_from_post`       | Alias for deleting a comment from a specific post.                  |
-| `filter_negative_comments`       | Filter out comments with negative sentiment keywords.               |
 | `get_number_of_comments`         | Count the number of comments on a post.                             |
-| `get_number_of_likes`            | Count the number of likes on a post.                                |
-| `get_post_impressions`           | Get total impressions on a post.                                    |
-| `get_post_impressions_unique`    | Get number of unique users who saw the post.                        |
-| `get_post_impressions_paid`      | Get number of paid impressions on the post.                         |
-| `get_post_impressions_organic`   | Get number of organic impressions on the post.                      |
 | `get_post_engaged_users`         | Get number of users who engaged with the post.                      |
 | `get_post_clicks`                | Get number of clicks on the post.                                   |
-| `get_post_reactions_like_total`  | Get total number of 'Like' reactions.                               |
-| `get_post_top_commenters`        | Get the top commenters on a post.                                   |
 | `post_image_to_facebook`         | Post an image with a caption to the Facebook page.                  |
-| `send_dm_to_user`                | Send a direct message to a user.                                    |
 | `update_post`                    | Updates an existing post's message.                                 |
-| `schedule_post`                  | Schedule a post for future publication.                     |
-| `get_page_fan_count`             | Retrieve the total number of Page fans.                     |
-| `get_post_share_count`           | Get the number of shares on a post.                         |
-| `get_post_reactions_breakdown`   | Get all reaction counts for a post in one call.              |
-| `bulk_delete_comments`           | Delete multiple comments by ID.                              |
-| `bulk_hide_comments`             | Hide multiple comments by ID.                               |
-| `bulk_unhide_comments`           | Unhide multiple comments by ID.                             |
-| `get_comment_replies`            | Get all replies to a specific comment.                      |
-| `get_post_permalink`             | Get the permalink URL of a post.                            |
-| `get_scheduled_posts`            | List all scheduled (unpublished) posts on the Page.         |
-| `get_page_info`                  | Get extended Page details (name, about, category, website). |
+| `schedule_post`                  | Schedule a post for future publication.                             |
+| `get_post_share_count`           | Get the number of shares on a post.                                 |
+| `get_post_reactions_breakdown`   | Get all reaction counts for a post in one call.                     |
+| `get_comment_replies`            | Get all replies to a specific comment.                              |
+| `get_post_permalink`             | Get the permalink URL of a post.                                    |
+| `get_scheduled_posts`            | List all scheduled unpublished posts on the Page.                   |
+| `get_page_info`                  | Get extended Page details.                                          |
+
+---
+
+## Reliability & Account Safety
+
+- Requests send the Page access token in the `Authorization` header, never in the URL.
+- Graph API usage headers trigger proactive cooldowns near Meta's limits.
+- Throttled and transient requests retry with capped backoff and honor Meta's reported regain time.
 
 ---
 
@@ -79,9 +69,9 @@ If uv is not already installed, run:
 curl -Ls https://astral.sh/uv/install.sh | bash
 ```
 
-Once uv is installed, install the project dependencies:
+Once uv is installed, install the locked project dependencies:
 ```bash
-uv pip install -r requirements.txt
+uv sync --locked
 ```
 
 ### 3. Set Up Environment
@@ -94,28 +84,52 @@ FACEBOOK_ACCESS_TOKEN=your_facebook_page_access_token
 FACEBOOK_PAGE_ID=your_page_id
 ```
 
-## 🧩 Using with Claude Desktop
-To set up the FacebookMCP in Clade:
+## Running the Server
 
-1.	Open Clade.
-2.	Go to Settings → Developer → Edit Config.
-3.	In the config file that opens, add the following entry:
+The server uses MCP Streamable HTTP and listens on `http://127.0.0.1:8000/mcp` by default.
 
 ```bash
-"FacebookMCP": {
-  "command": "uv",
-  "args": [
-    "run",
-    "--with",
-    "mcp[cli]",
-    "--with",
-    "requests",
-    "mcp",
-    "run",
-    "/path/to/facebook-mcp-server/server.py"
-  ]
-}
+uv run python server.py
 ```
+
+To accept connections from another machine, bind to all interfaces and explicitly allow the hostname or IP clients use:
+
+```bash
+MCP_HOST=0.0.0.0 \
+MCP_PORT=8000 \
+MCP_ALLOWED_HOSTS='facebook-mcp.example.com:*,192.168.1.20:*' \
+uv run python server.py
+```
+
+Connect MCP clients to `http://facebook-mcp.example.com:8000/mcp`.
+
+`MCP_ALLOWED_HOSTS` is a comma-separated Host-header allowlist. Keep this server behind a firewall, VPN, or authenticated reverse proxy because exposed tools can update and delete Page content.
+
+## Docker Compose
+
+Create local configuration from the provided example:
+
+```bash
+cp .env.example .env
+```
+
+Set `FACEBOOK_ACCESS_TOKEN`, `FACEBOOK_PAGE_ID`, and `MCP_ALLOWED_HOSTS` in `.env`, then build and start:
+
+```bash
+docker compose up --build -d
+```
+
+The MCP endpoint is available at `http://localhost:8000/mcp` by default.
+
+Useful commands:
+
+```bash
+docker compose logs -f facebook-mcp
+docker compose ps
+docker compose down
+```
+
+The image uses an official `uv` Alpine builder and a separate non-root Python Alpine runtime. Compose runs it with a read-only filesystem, no Linux capabilities, and `no-new-privileges`.
 
 ---
 

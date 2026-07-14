@@ -2,6 +2,16 @@ from typing import Any
 from facebook_api import FacebookAPI
 
 
+REACTION_METRICS = {
+    "like": "post_reactions_like_total",
+    "love": "post_reactions_love_total",
+    "wow": "post_reactions_wow_total",
+    "haha": "post_reactions_haha_total",
+    "sad": "post_reactions_sorry_total",
+    "angry": "post_reactions_anger_total",
+}
+
+
 class Manager:
     def __init__(self):
         self.api = FacebookAPI()
@@ -41,7 +51,7 @@ class Manager:
         return [c for c in comments.get("data", []) if any(k in c.get("message", "").lower() for k in keywords)]
 
     def get_number_of_comments(self, post_id: str) -> int:
-        return len(self.api.get_comments(post_id).get("data", []))
+        return self.api.get_comment_count(post_id)
 
     def get_number_of_likes(self, post_id: str) -> int:
         return self.api._request("GET", post_id, {"fields": "likes.summary(true)"}).get("likes", {}).get("summary", {}).get("total_count", 0)
@@ -67,19 +77,62 @@ class Manager:
     def get_post_impressions_organic(self, post_id: str) -> dict[str, Any]:
         return self.api.get_insights(post_id, "post_impressions_organic")
 
-    def get_post_engaged_users(self, post_id: str) -> dict[str, Any]:
-        return {
-            "status": "unsupported",
-            "metric": "post_engaged_users",
-            "post_id": post_id,
-            "message": (
-                "Meta deprecated post_engaged_users for all Graph API versions on June 15, 2026, "
-                "and provides no equivalent post-level engaged-users metric."
-            ),
-        }
-
     def get_post_clicks(self, post_id: str) -> dict[str, Any]:
         return self.api.get_insights(post_id, "post_clicks")
+
+    def get_post_media_views(self, post_id: str) -> dict[str, Any]:
+        return self.api.get_insights(post_id, "post_media_view")
+
+    def get_post_unique_media_viewers(self, post_id: str) -> dict[str, Any]:
+        return self.api.get_insights(post_id, "post_total_media_view_unique")
+
+    def get_post_metrics(self, post_id: str) -> dict[str, Any]:
+        reaction_response = self.api.get_bulk_insights(post_id, list(REACTION_METRICS.values()))
+        insight_responses = {
+            "clicks": self.get_post_clicks(post_id),
+            "media_views": self.get_post_media_views(post_id),
+            "unique_media_viewers": self.get_post_unique_media_viewers(post_id),
+        }
+
+        result: dict[str, Any] = {
+            "post_id": post_id,
+            "reactions": None if "error" in reaction_response else self._normalize_reactions(reaction_response),
+            "comments": self.get_number_of_comments(post_id),
+            "shares": self.get_post_share_count(post_id),
+        }
+        errors: dict[str, Any] = {}
+        for name, response in insight_responses.items():
+            value, error = self._extract_insight_value(response)
+            result[name] = value
+            if error:
+                errors[name] = error
+        if "error" in reaction_response:
+            errors["reactions"] = reaction_response["error"]
+        if errors:
+            result["errors"] = errors
+        return result
+
+    @staticmethod
+    def _extract_insight_value(response: dict[str, Any]) -> tuple[Any, dict[str, Any] | None]:
+        if "error" in response:
+            return None, response["error"]
+        data = response.get("data", [])
+        if not data:
+            return 0, None
+        return data[0].get("values", [{}])[0].get("value", 0), None
+
+    @classmethod
+    def _normalize_reactions(cls, response: dict[str, Any]) -> dict[str, Any]:
+        values_by_metric = {
+            item.get("name"): item.get("values", [{}])[0].get("value", 0)
+            for item in response.get("data", [])
+        }
+        reactions = {
+            name: values_by_metric.get(metric, 0)
+            for name, metric in REACTION_METRICS.items()
+        }
+        reactions["total"] = sum(value for value in reactions.values() if isinstance(value, (int, float)))
+        return reactions
 
     def get_post_reactions_like_total(self, post_id: str) -> dict[str, Any]:
         return self.api.get_insights(post_id, "post_reactions_like_total")
@@ -128,15 +181,9 @@ class Manager:
 
     def get_post_reactions_breakdown(self, post_id: str) -> dict[str, Any]:
         """Return counts for all reaction types on a post."""
-        metrics = [
-            "post_reactions_like_total",
-            "post_reactions_love_total",
-            "post_reactions_wow_total",
-            "post_reactions_haha_total",
-            "post_reactions_sorry_total",
-            "post_reactions_anger_total",
-        ]
-        raw = self.api.get_bulk_insights(post_id, metrics)
+        raw = self.api.get_bulk_insights(post_id, list(REACTION_METRICS.values()))
+        if "error" in raw:
+            return raw
         results: dict[str, Any] = {}
         for item in raw.get("data", []):
             name = item.get("name")

@@ -137,6 +137,14 @@ class FacebookAPI:
     def get_comments(self, post_id: str) -> dict[str, Any]:
         return self._request("GET", f"{post_id}/comments", {"fields": "id,message,from,created_time"})
 
+    def get_comment_count(self, post_id: str) -> int:
+        data = self._request(
+            "GET",
+            f"{post_id}/comments",
+            {"limit": 0, "summary": "true", "filter": "stream"},
+        )
+        return data.get("summary", {}).get("total_count", 0)
+
     def delete_post(self, post_id: str) -> dict[str, Any]:
         return self._request("DELETE", f"{post_id}", {})
 

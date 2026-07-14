@@ -30,9 +30,11 @@ This MCP provides a suite of AI-callable tools that connect directly to a Facebo
 | `get_post_comments`              | Fetch comments on a given post.                                     |
 | `delete_post`                    | Delete a specific post by ID.                                       |
 | `delete_comment`                 | Delete a specific comment by ID.                                    |
-| `get_number_of_comments`         | Count the number of comments on a post.                             |
-| `get_post_engaged_users`         | Report unsupported status for Meta's deprecated engaged-users metric. |
+| `get_number_of_comments`         | Count all comments and replies on a post.                           |
 | `get_post_clicks`                | Get number of clicks on the post.                                   |
+| `get_post_media_views`           | Get total media views for a post.                                   |
+| `get_post_unique_media_viewers`  | Get unique media viewers for a post.                                |
+| `get_post_metrics`               | Get reactions, comments, shares, clicks, views, and unique viewers. |
 | `post_image_to_facebook`         | Post an image with a caption to the Facebook page.                  |
 | `update_post`                    | Updates an existing post's message.                                 |
 | `schedule_post`                  | Schedule a post for future publication.                             |
@@ -42,6 +44,8 @@ This MCP provides a suite of AI-callable tools that connect directly to a Facebo
 | `get_post_permalink`             | Get the permalink URL of a post.                                    |
 | `get_scheduled_posts`            | List all scheduled unpublished posts on the Page.                   |
 | `get_page_info`                  | Get extended Page details.                                          |
+
+`get_post_metrics` reports interaction counts and media audience metrics separately. Unique media viewers are not equivalent to the deprecated unique engaged-users metric.
 
 ---
 

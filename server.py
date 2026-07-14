@@ -112,14 +112,26 @@ def get_post_clicks(post_id: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-def get_post_engaged_users(post_id: str) -> dict[str, Any]:
-    """Report availability of Meta's deprecated post engaged-users metric."""
-    return manager.get_post_engaged_users(post_id)
+def get_post_media_views(post_id: str) -> dict[str, Any]:
+    """Fetch total media views for a post."""
+    return manager.get_post_media_views(post_id)
+
+
+@mcp.tool()
+def get_post_unique_media_viewers(post_id: str) -> dict[str, Any]:
+    """Fetch unique media viewers for a post."""
+    return manager.get_post_unique_media_viewers(post_id)
+
+
+@mcp.tool()
+def get_post_metrics(post_id: str) -> dict[str, Any]:
+    """Fetch reactions, comments, shares, clicks, media views, and unique viewers."""
+    return manager.get_post_metrics(post_id)
 
 
 @mcp.tool()
 def get_number_of_comments(post_id: str) -> int:
-    """Count comments on a post."""
+    """Count all comments and replies on a post."""
     return manager.get_number_of_comments(post_id)
 
 

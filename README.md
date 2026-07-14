@@ -25,7 +25,8 @@ This MCP provides a suite of AI-callable tools that connect directly to a Facebo
 
 | Tool                             | Description                                                         |
 |----------------------------------|---------------------------------------------------------------------|
-| `get_page_posts`                 | Retrieve recent posts from the Page.                                |
+| `get_page_posts`                 | Retrieve recent posts, optionally with attachment media metadata.   |
+| `get_post_info`                  | Retrieve one post, optionally with attachment media metadata.       |
 | `get_post_comments`              | Fetch comments on a given post.                                     |
 | `delete_post`                    | Delete a specific post by ID.                                       |
 | `delete_comment`                 | Delete a specific comment by ID.                                    |

@@ -22,9 +22,15 @@ manager = Manager()
 
 
 @mcp.tool()
-def get_page_posts() -> dict[str, Any]:
-    """Fetch the most recent posts on the Page."""
-    return manager.get_page_posts()
+def get_page_posts(include_attachments: bool = False) -> dict[str, Any]:
+    """Fetch recent Page posts, optionally including downloadable media metadata."""
+    return manager.get_page_posts(include_attachments)
+
+
+@mcp.tool()
+def get_post_info(post_id: str, include_attachments: bool = False) -> dict[str, Any]:
+    """Fetch one post, optionally including image, video, and nested attachment metadata."""
+    return manager.get_post_info(post_id, include_attachments)
 
 
 @mcp.tool()

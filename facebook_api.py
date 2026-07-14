@@ -15,6 +15,13 @@ THROTTLE_CODES = {4, 17, 32, 613}
 ALLOWED_MESSAGING_TYPES = {"RESPONSE", "UPDATE", "MESSAGE_TAG"}
 ALLOWED_MESSAGE_TAGS = {"HUMAN_AGENT"}
 
+POST_FIELDS = "id,message,created_time"
+POST_ATTACHMENT_FIELDS = (
+    "full_picture,source,"
+    "attachments.limit(25){description,media,media_type,target,title,type,url,"
+    "subattachments.limit(25){description,media,media_type,target,title,type,url}}"
+)
+
 
 class FacebookAPI:
     def __init__(self) -> None:
@@ -109,8 +116,17 @@ class FacebookAPI:
     def reply_to_comment(self, comment_id: str, message: str) -> dict[str, Any]:
         return self._request("POST", f"{comment_id}/comments", {"message": message})
 
-    def get_posts(self) -> dict[str, Any]:
-        return self._request("GET", f"{PAGE_ID}/posts", {"fields": "id,message,created_time"})
+    def get_posts(self, include_attachments: bool = False) -> dict[str, Any]:
+        fields = POST_FIELDS
+        if include_attachments:
+            fields = f"{fields},{POST_ATTACHMENT_FIELDS}"
+        return self._request("GET", f"{PAGE_ID}/posts", {"fields": fields})
+
+    def get_post_info(self, post_id: str, include_attachments: bool = False) -> dict[str, Any]:
+        fields = f"{POST_FIELDS},updated_time,permalink_url"
+        if include_attachments:
+            fields = f"{fields},{POST_ATTACHMENT_FIELDS}"
+        return self._request("GET", post_id, {"fields": fields})
 
     def get_comments(self, post_id: str) -> dict[str, Any]:
         return self._request("GET", f"{post_id}/comments", {"fields": "id,message,from,created_time"})

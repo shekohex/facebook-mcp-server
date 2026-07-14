@@ -12,8 +12,11 @@ class Manager:
     def reply_to_comment(self, post_id: str, comment_id: str, message: str) -> dict[str, Any]:
         return self.api.reply_to_comment(comment_id, message)
 
-    def get_page_posts(self) -> dict[str, Any]:
-        return self.api.get_posts()
+    def get_page_posts(self, include_attachments: bool = False) -> dict[str, Any]:
+        return self.api.get_posts(include_attachments)
+
+    def get_post_info(self, post_id: str, include_attachments: bool = False) -> dict[str, Any]:
+        return self.api.get_post_info(post_id, include_attachments)
 
     def get_post_comments(self, post_id: str) -> dict[str, Any]:
         return self.api.get_comments(post_id)
